@@ -17,6 +17,7 @@
 		if (errno)                                     \
 		{                                              \
 			std::perror(errMsg); std::fflush(stderr);  \
+			errno = 0;                                 \
 		}                                              \
 		else                                           \
 		{                                              \
