@@ -49,7 +49,7 @@
 	AbortIf_2(!(cond), ret)
 
 #define AbortIfNot_3(cond, ret, msg) \
-	AbortIf_3(!(cond), msg, ret)
+	AbortIf_3(!(cond), ret, msg)
 
 
 #define cat(a,b) a ## b
