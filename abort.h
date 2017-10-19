@@ -1,3 +1,11 @@
+/**
+ *  \file   abort.h
+ *  \author Jason Fernandez
+ *  \date   10/18/2017
+ *
+ *  https://github.com/jfern2011/abort
+ */
+
 #ifndef __ABORT_H__
 #define __ABORT_H__
 
@@ -10,7 +18,7 @@
 	{                                                  \
 		char errMsg[256];                              \
                                                        \
-		std::sprintf(errMsg, "[ABORT] %s in %s:%d",    \
+		std::sprintf(errMsg, "[abort] %s in %s:%d",    \
 			         __PRETTY_FUNCTION__,              \
 			         __FILE__, __LINE__ );             \
                                                        \
@@ -34,7 +42,7 @@
 	{                                                          \
 		char errMsg[256];                                      \
                                                                \
-		std::snprintf(errMsg, 256, "[ABORT] %s in %s:%d: %s",  \
+		std::snprintf(errMsg, 256, "[abort] %s in %s:%d: %s",  \
 			         __PRETTY_FUNCTION__,                      \
 			         __FILE__, __LINE__,                       \
 			         msg);                                     \
