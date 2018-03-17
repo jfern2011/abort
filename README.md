@@ -67,6 +67,10 @@ logical expression but rather always returns from the calling function.
 Its behavior is identical to AbortIf and AbortIfNot where the logical
 is always true and false, respectively.
 
+## Usage
+
+Simply include abort.h in your project.
+
 ## Contact
 
 Feel free to email me with bug reports or suggestions:
