@@ -4,7 +4,8 @@ Macros for tracing run-time errors
 Abort, AbortIf, and AbortIfNot can be used to print a stack trace
 leading up to the point at which the last error occured in your
 program. AbortIf and AbortIfNot each have two versions, one that takes
-two inputs and one that takes three. Here's a contrived example:
+two inputs and one that takes three or more. Here's a contrived
+example:
 
 	#include <unistd.h>
      
@@ -34,7 +35,7 @@ two inputs and one that takes three. Here's a contrived example:
 	{
 		/*
 		 * This says that if func1() did not return 0 (to indicate
-		 * success), then return false. Here we use the optional 3rd
+		 * success), then return false. Here we use an optional 3rd
 		 * argument to print a custom message
 		 */
 		AbortIf(func1() != 0, false, "func1() failed :(");
@@ -46,9 +47,10 @@ two inputs and one that takes three. Here's a contrived example:
 	{
 		/*
 		 * This says that if func2() returns false (an error), then
-		 * return false:
+		 * return false. Note that we can also format our error
+		 * message just like printf():
 		 */
-		AbortIfNot(func2(), false, "func2() failed :(");
+		AbortIfNot(func2(), false, "func2() failed. %s", "[more details]");
         
 		return true;
 	}
@@ -63,7 +65,7 @@ two inputs and one that takes three. Here's a contrived example:
 Abort is like AbortIf and AbortIfNot except that it does not take a
 logical expression but rather always returns from the calling function.
 Its behavior is identical to AbortIf and AbortIfNot where the logical
-is always true.
+is always true and false, respectively.
 
 ## Contact
 
