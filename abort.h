@@ -12,6 +12,8 @@
 #include <cerrno>
 #include <cstdio>
 
+#ifndef DOXYGEN_SKIP
+
 #define AbortIf_2(cond, ret)                           \
 {                                                      \
 	if (cond)                                          \
@@ -83,6 +85,8 @@
 									3, 3, 3, 3, 3, 3, 3, 3, \
 									3, 3, 3, 3, 3, 3, 3, 3, \
 									3, 3, 3, 3, 3, 3, 3, 2)
+
+#endif
 
 /**
  * @def AbortIf(cond, ret, ...)
