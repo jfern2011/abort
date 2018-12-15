@@ -37,9 +37,8 @@ int _get_abort_nargs_(T&&... args) { return sizeof...(T); }
         char errMsg[256];                               \
                                                         \
         std::snprintf(                                  \
-            errMsg, 256, "[stack trace] %s in %s:%d",   \
-            __PRETTY_FUNCTION__,                        \
-            __FILE__, __LINE__ );                       \
+            errMsg, 256, "[abort] %s in %s:%d",         \
+            __PRETTY_FUNCTION__, __FILE__, __LINE__);   \
                                                         \
         if (errno)                                      \
         {                                               \
