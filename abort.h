@@ -34,10 +34,10 @@ int _get_abort_nargs_(T&&... args) { return sizeof...(T); }
 {                                                       \
     if (cond)                                           \
     {                                                   \
-        char errMsg[256];                               \
+        char errMsg[1024];                              \
                                                         \
         std::snprintf(                                  \
-            errMsg, 256, "[abort] %s in %s:%d",         \
+            errMsg, 1024, "[abort] %s in %s:%d",        \
             __PRETTY_FUNCTION__, __FILE__, __LINE__);   \
                                                         \
         if (errno)                                      \
