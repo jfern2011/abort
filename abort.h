@@ -6,76 +6,175 @@
  *  https://github.com/jfern2011/abort
  */
 
-#ifndef __ABORT_H__
-#define __ABORT_H__
+#ifndef ABORT_H_
+#define ABORT_H_
 
-#include <cerrno>
+#include <cstddef>
 #include <cstdio>
+#include <iostream>
+#include <memory>
+#include <ostream>
+#include <string>
 
 #ifndef DOXYGEN_SKIP
-
-/*
- * Helper function to determine number of arguments passed
- */
-template <typename... T>
-int _get_abort_nargs_(T&&... args) { return sizeof...(T); }
-
+#if defined(_WIN32) || defined(_WIN64)
+#define __PRETTY_FUNCTION__ __FUNCTION__
 #endif
+#define ABORT_SELECT(select, cond, ...) {                          \
+    if (cond) {                                                    \
+        diagnostics::internal::header(__FILE__, __LINE__);         \
+        if (diagnostics::internal::get_abort_nargs(__VA_ARGS__)) { \
+            diagnostics::internal::body(__VA_ARGS__);              \
+        } else {                                                   \
+            diagnostics::internal::default_body( select );         \
+        }                                                          \
+    }                                                              \
+}
+#endif  // DOXYGEN_SKIP
+
+namespace diagnostics {
+
+std::ostream& get_ostream(); // forward declaration
+
+namespace internal {
 
 /**
- * @def AbortIf(cond, ret, ...)
+ * The stream to which messages are written to. By default, all messages are
+ * written to standard output
+ */
+std::shared_ptr<std::ostream> stream;
+
+/**
+ * The buffer to which messages are formatted before being placed on the
+ * output stream
+ */
+std::string buffer(1024, '\0');
+
+/**
+ * Helper function to determine the number of arguments passed to a variadic
+ * macro
+ *
+ * @tparam T The macro argument types
+ *
+ * @param[in] args The macro input arguments
+ *
+ * @return The number of arguments
+ */
+template <typename... T>
+int get_abort_nargs(T&& ... args) { return sizeof...(T); }
+
+/**
+ * Write the body of the default message when no arguments are passed to
+ * a macro
+ *
+ * @param[in] msg The default message to write
+ */
+inline void default_body(const char* msg) {
+    get_ostream() << msg << std::endl;
+}
+
+/**
+ * Version of \ref body() when no arguments are passed. This is never called
+ * but is required for compilation
+ */
+inline void body() {}
+
+/**
+ * Write the body of a message in printf-like fashion
+ *
+ * @tparam T Argument types
+ *
+ * @param[in] args The arguments used to construct a message. The first must
+ *                 be a format string (as with printf); the remaining arguments
+ *                 follow based on the format specifiers. See std::printf()
+ */
+template <typename... T>
+void body(T&& ... args) {
+    if (!buffer.empty()) {
+        std::snprintf(&buffer.at(0), buffer.size(), args...);
+        get_ostream() << buffer << std::endl;
+    }
+}
+
+/**
+ * Write the header of a message
+ *
+ * @param[in] file The name of the file from which this message originated
+ * @param[in] line The line number at which this message originated
+ */
+inline void header(const char* file, int line) {
+    
+    get_ostream() << file << ":" << line << ": ";
+}
+
+}  // namespace internal
+
+/**
+ * Get the stream object currently being written to
+ *
+ * @return The output stream
+ */
+std::ostream& get_ostream() {
+    if (!internal::stream) {
+        internal::stream = std::make_shared<std::ostream>(
+            std::cout.rdbuf());
+    }
+    return *internal::stream;
+}
+
+/**
+ * Set the maximum size of an output message in bytes. Messages larger than
+ * this will be truncated
+ *
+ * @param[in] size The message size limit
+ */
+void set_message_size(std::size_t size) {
+    internal::buffer.resize(size);
+}
+
+/**
+ * Set the stream object to which to write to. By default, all messages are
+ * written to the standard output stream
+ *
+ * @return The output stream
+ */
+void set_ostream(std::shared_ptr<std::ostream> os) {
+    internal::stream = os;
+}
+
+}  // namespace diagnostics
+
+/**
+ * @def ABORT_IF(cond, ret, ...)
  *
  * Triggers an abort in the event that the specified condition \a cond
  * is true. This will cause the currently executing function to exit
  * with the return value \a ret. Any additional arguments will be used
  * to construct an error message
  */
-#define AbortIf(cond, ret, ...)                         \
-{                                                       \
-    if (cond)                                           \
-    {                                                   \
-        char errMsg[1024];                              \
-                                                        \
-        std::snprintf(                                  \
-            errMsg, 1024, "[abort] %s in %s:%d",        \
-            __PRETTY_FUNCTION__, __FILE__, __LINE__);   \
-                                                        \
-        if (errno)                                      \
-        {                                               \
-            std::perror(errMsg); std::fflush(stderr);   \
-            errno = 0;                                  \
-        }                                               \
-        else                                            \
-        {                                               \
-            std::printf("%s", errMsg);                  \
-            if (_get_abort_nargs_(__VA_ARGS__))         \
-                std::printf( ": " __VA_ARGS__);         \
-            std::printf("\n");                          \
-                std::fflush( stdout );                  \
-        }                                               \
-        return (ret);                                   \
-    }                                                   \
-}
+#define ABORT_IF(cond, ret, ...) \
+    ABORT_SELECT("ABORT_IF("#cond", "#ret");", (cond), __VA_ARGS__)
 
-/**
- * @def Abort(ret, ...)
- *
- * Triggers an unconditional abort.  This will cause the currently
- * executing function to exit with the return value \a ret. Any
- * additional arguments (optional) will be used to create an error
- * message
- */
-#define Abort(ret, ...) AbortIf(true, ret, ##__VA_ARGS__)
+ /**
+  * @def ABORT(ret, ...)
+  *
+  * Triggers an unconditional abort.  This will cause the currently
+  * executing function to exit with the return value \a ret. Any
+  * additional arguments (optional) will be used to create an error
+  * message
+  */
+#define ABORT(ret, ...) \
+    ABORT_SELECT("ABORT("#ret");", true, __VA_ARGS__)
 
-/**
- * @def AbortIfNot(cond, ret, ...)
- *
- * Triggers an abort in the event that the specified condition \a cond
- * is false. This will cause the currently executing function to exit
- * with the return value \a ret. Any additional arguments will be used
- * to construct an error message
- */
-#define AbortIfNot(cond, ret, ...)                      \
-    AbortIf(!(cond), ret, ##__VA_ARGS__)
+ /**
+  * @def ABORT_IF_NOT(cond, ret, ...)
+  *
+  * Triggers an abort in the event that the specified condition \a cond
+  * is false. This will cause the currently executing function to exit
+  * with the return value \a ret. Any additional arguments will be used
+  * to construct an error message
+  */
+#define ABORT_IF_NOT(cond, ret, ...) \
+    ABORT_SELECT("ABORT_IF_NOT("#cond", "#ret");", (cond), __VA_ARGS__)
 
-#endif
+#endif  // ABORT_H_
