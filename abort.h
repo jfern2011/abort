@@ -29,7 +29,7 @@ std::ostream& get_ostream(); // forward declaration
 namespace internal {
 
 /**
- * The stream to which messages are written to. By default, all messages are
+ * The stream to which messages are written. All messages are by default
  * written to standard output
  */
 std::shared_ptr<std::ostream> stream;
@@ -41,8 +41,7 @@ std::shared_ptr<std::ostream> stream;
 std::string buffer(1024, '\0');
 
 /**
- * Helper function to determine the number of arguments passed to a variadic
- * macro
+ * Get the number of arguments passed to a variadic macro
  *
  * @tparam T The macro argument types
  *
@@ -54,42 +53,22 @@ template <typename... T>
 int get_abort_nargs(T&& ... args) { return sizeof...(T); }
 
 /**
- * Write the body of the default message when no arguments are passed to
- * a macro
+ * Write the body of a message to the stream
  *
- * @param[in] msg The default message to write
+ * @param[in] msg The message to write
  */
-inline void default_body(const char* msg) {
+inline void body(const std::string& msg) {
     get_ostream() << msg << std::endl;
 }
 
 /**
- * Version of \ref body() when no arguments are passed. This is never called
- * but is required for compilation
- */
-inline void body() {}
-
-/**
- * Write the body of a message in printf-like fashion
- *
- * @tparam T Argument types
- *
- * @param[in] args The arguments used to construct a message. The first must
- *                 be a format string (as with printf); the remaining arguments
- *                 follow based on the format specifiers. See std::printf()
- */
-void body(const std::string& message) {
-        get_ostream() << message << std::endl;
-}
-
-/**
- * Write the header of a message
+ * Write the "preface" of a message
  *
  * @param[in] file The name of the file from which this message originated
  * @param[in] line The line number at which this message originated
  * @param[in] func Function (or method) from which this message originated
  */
-inline void header(const char* file, int line, const char* func) {
+inline void preface(const char* file, int line, const char* func) {
     
     get_ostream() << file << ":" << line << ": In '" << func << "': ";
 }
@@ -101,7 +80,7 @@ inline void header(const char* file, int line, const char* func) {
  *
  * @return The output stream
  */
-std::ostream& get_ostream() {
+inline std::ostream& get_ostream() {
     if (!internal::stream) {
         internal::stream = std::make_shared<std::ostream>(
             std::cout.rdbuf());
@@ -110,22 +89,22 @@ std::ostream& get_ostream() {
 }
 
 /**
- * Set the maximum size of an output message in bytes. Messages larger than
- * this will be truncated
+ * Set the maximum size of an output message in bytes. Messages larger
+ * than this will be truncated
  *
  * @param[in] size The message size limit
  */
-void set_message_size(std::size_t size) {
+inline void set_message_size(std::size_t size) {
     internal::buffer.resize(size);
 }
 
 /**
- * Set the stream object to which to write to. By default, all messages are
- * written to the standard output stream
+ * Set the stream object to write to. By default, messages are written
+ * to standard output
  *
  * @return The output stream
  */
-void set_ostream(std::shared_ptr<std::ostream> os) {
+inline void set_ostream(std::shared_ptr<std::ostream> os) {
     internal::stream = os;
 }
 
@@ -138,15 +117,15 @@ void set_ostream(std::shared_ptr<std::ostream> os) {
  */
 #define ABORT_SELECT(select, cond, ret, ...) {                          \
     if (cond) {                                                         \
-        diagnostics::internal::header(                                  \
+        diagnostics::internal::preface(                                 \
             __FILE__, __LINE__, __PRETTY_FUNCTION__);                   \
         if (diagnostics::internal::get_abort_nargs(__VA_ARGS__)) {      \
             std::snprintf(&diagnostics::internal::buffer.at(0),         \
                           diagnostics::internal::buffer.size(),         \
-                          select "\n\t => " __VA_ARGS__);               \
+                          select "\n\tnote: " __VA_ARGS__);             \
             diagnostics::internal::body(diagnostics::internal::buffer); \
         } else {                                                        \
-            diagnostics::internal::default_body( select );              \
+            diagnostics::internal::body(select);                        \
         }                                                               \
         return (ret);                                                   \
     }                                                                   \
