@@ -18,18 +18,8 @@
 
 #ifndef DOXYGEN_SKIP
 #if defined(_WIN32) || defined(_WIN64)
-#define __PRETTY_FUNCTION__ __FUNCTION__
+#define __PRETTY_FUNCTION__ __FUNCSIG__
 #endif
-#define ABORT_SELECT(select, cond, ...) {                          \
-    if (cond) {                                                    \
-        diagnostics::internal::header(__FILE__, __LINE__);         \
-        if (diagnostics::internal::get_abort_nargs(__VA_ARGS__)) { \
-            diagnostics::internal::body(__VA_ARGS__);              \
-        } else {                                                   \
-            diagnostics::internal::default_body( select );         \
-        }                                                          \
-    }                                                              \
-}
 #endif  // DOXYGEN_SKIP
 
 namespace diagnostics {
@@ -88,12 +78,8 @@ inline void body() {}
  *                 be a format string (as with printf); the remaining arguments
  *                 follow based on the format specifiers. See std::printf()
  */
-template <typename... T>
-void body(T&& ... args) {
-    if (!buffer.empty()) {
-        std::snprintf(&buffer.at(0), buffer.size(), args...);
-        get_ostream() << buffer << std::endl;
-    }
+void body(const std::string& message) {
+        get_ostream() << message << std::endl;
 }
 
 /**
@@ -101,10 +87,11 @@ void body(T&& ... args) {
  *
  * @param[in] file The name of the file from which this message originated
  * @param[in] line The line number at which this message originated
+ * @param[in] func Function (or method) from which this message originated
  */
-inline void header(const char* file, int line) {
+inline void header(const char* file, int line, const char* func) {
     
-    get_ostream() << file << ":" << line << ": ";
+    get_ostream() << file << ":" << line << ": In '" << func << "': ";
 }
 
 }  // namespace internal
@@ -145,6 +132,27 @@ void set_ostream(std::shared_ptr<std::ostream> os) {
 }  // namespace diagnostics
 
 /**
+ * @def ABORT_SELECT(select, cond, ret, ...)
+ *
+ * Generalized abort macro
+ */
+#define ABORT_SELECT(select, cond, ret, ...) {                          \
+    if (cond) {                                                         \
+        diagnostics::internal::header(                                  \
+            __FILE__, __LINE__, __PRETTY_FUNCTION__);                   \
+        if (diagnostics::internal::get_abort_nargs(__VA_ARGS__)) {      \
+            std::snprintf(&diagnostics::internal::buffer.at(0),         \
+                          diagnostics::internal::buffer.size(),         \
+                          select "\n\t => " __VA_ARGS__);               \
+            diagnostics::internal::body(diagnostics::internal::buffer); \
+        } else {                                                        \
+            diagnostics::internal::default_body( select );              \
+        }                                                               \
+        return (ret);                                                   \
+    }                                                                   \
+}
+
+/**
  * @def ABORT_IF(cond, ret, ...)
  *
  * Triggers an abort in the event that the specified condition \a cond
@@ -153,7 +161,7 @@ void set_ostream(std::shared_ptr<std::ostream> os) {
  * to construct an error message
  */
 #define ABORT_IF(cond, ret, ...) \
-    ABORT_SELECT("ABORT_IF("#cond", "#ret");", (cond), __VA_ARGS__)
+    ABORT_SELECT("ABORT_IF("#cond", "#ret");", (cond), (ret), __VA_ARGS__)
 
  /**
   * @def ABORT(ret, ...)
@@ -164,7 +172,7 @@ void set_ostream(std::shared_ptr<std::ostream> os) {
   * message
   */
 #define ABORT(ret, ...) \
-    ABORT_SELECT("ABORT("#ret");", true, __VA_ARGS__)
+    ABORT_SELECT("ABORT("#ret");", true, (ret), __VA_ARGS__)
 
  /**
   * @def ABORT_IF_NOT(cond, ret, ...)
@@ -175,6 +183,6 @@ void set_ostream(std::shared_ptr<std::ostream> os) {
   * to construct an error message
   */
 #define ABORT_IF_NOT(cond, ret, ...) \
-    ABORT_SELECT("ABORT_IF_NOT("#cond", "#ret");", (cond), __VA_ARGS__)
+    ABORT_SELECT("ABORT_IF_NOT("#cond", "#ret");", !(cond), (ret), __VA_ARGS__)
 
 #endif  // ABORT_H_
