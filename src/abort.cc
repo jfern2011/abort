@@ -6,7 +6,7 @@
  *  https://github.com/jfern2011/abort
  */
 
-#include "abort.h"
+#include "abort/abort.h"
 
 #include <iostream>
 
