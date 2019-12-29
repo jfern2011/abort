@@ -1,7 +1,7 @@
 /**
  *  \file   abort.h
  *  \author Jason Fernandez
- *  \date   10/18/2017
+ *  \date   12/28/2019
  *
  *  https://github.com/jfern2011/abort
  */
@@ -11,7 +11,6 @@
 
 #include <cstddef>
 #include <cstdio>
-#include <iostream>
 #include <memory>
 #include <ostream>
 #include <string>
@@ -23,22 +22,10 @@
 #endif  // DOXYGEN_SKIP
 
 namespace diagnostics {
-
-std::ostream& get_ostream(); // forward declaration
-
 namespace internal {
 
-/**
- * The stream to which messages are written. All messages are by default
- * written to standard output
- */
-std::shared_ptr<std::ostream> stream;
-
-/**
- * The buffer to which messages are formatted before being placed on the
- * output stream
- */
-std::string buffer(1024, '\0');
+extern std::string buffer;
+extern int         frame_cnt;
 
 /**
  * Get the number of arguments passed to a variadic macro
@@ -52,84 +39,24 @@ std::string buffer(1024, '\0');
 template <typename... T>
 int get_abort_nargs(T&& ... args) { return sizeof...(T); }
 
-/**
- * Write the body of a message to the stream
- *
- * @param[in] msg The message to write
- */
-inline void body(const std::string& msg) {
-    get_ostream() << msg << std::endl;
-}
-
-/**
- * Write the "preface" of a message
- *
- * @param[in] file The name of the file from which this message originated
- * @param[in] line The line number at which this message originated
- * @param[in] func Function (or method) from which this message originated
- */
-inline void preface(const char* file, int line, const char* func) {
-    
-    get_ostream() << file << ":" << line << ": In '" << func << "': ";
-}
+void print_msg(const char* select, int num_args, const char* cond,
+               const char* ret, int frame_cnt, const char* file, int line,
+               const char* func, const std::string& msg);
 
 }  // namespace internal
 
-/**
- * Get the stream object currently being written to
- *
- * @return The output stream
- */
-inline std::ostream& get_ostream() {
-    if (!internal::stream) {
-        internal::stream = std::make_shared<std::ostream>(
-            std::cout.rdbuf());
-    }
-    return *internal::stream;
-}
-
-/**
- * Set the maximum size of an output message in bytes. Messages larger
- * than this will be truncated
- *
- * @param[in] size The message size limit
- */
-inline void set_message_size(std::size_t size) {
-    internal::buffer.resize(size);
-}
-
-/**
- * Set the stream object to write to. By default, messages are written
- * to standard output
- *
- * @return The output stream
- */
-inline void set_ostream(std::shared_ptr<std::ostream> os) {
-    internal::stream = os;
-}
+std::ostream& get_ostream();
+void          set_message_size(std::size_t size);
+void          set_ostream(std::shared_ptr<std::ostream> os);
 
 }  // namespace diagnostics
 
 /**
- * @def ABORT_SELECT(select, cond, ret, ...)
+ * @def ABORT_N_ARGS(...)
  *
- * Generalized abort macro
+ * Get the number of arguments passed to a variadic macro
  */
-#define ABORT_SELECT(select, cond, ret, ...) {                          \
-    if (cond) {                                                         \
-        diagnostics::internal::preface(                                 \
-            __FILE__, __LINE__, __PRETTY_FUNCTION__);                   \
-        if (diagnostics::internal::get_abort_nargs(__VA_ARGS__)) {      \
-            std::snprintf(&diagnostics::internal::buffer.at(0),         \
-                          diagnostics::internal::buffer.size(),         \
-                          select "\n\tnote: " __VA_ARGS__);             \
-            diagnostics::internal::body(diagnostics::internal::buffer); \
-        } else {                                                        \
-            diagnostics::internal::body(select);                        \
-        }                                                               \
-        return (ret);                                                   \
-    }                                                                   \
-}
+#define ABORT_N_ARGS(...) diagnostics::internal::get_abort_nargs(__VA_ARGS__)
 
 /**
  * @def ABORT_IF(cond, ret, ...)
@@ -139,8 +66,27 @@ inline void set_ostream(std::shared_ptr<std::ostream> os) {
  * with the return value \a ret. Any additional arguments will be used
  * to construct an error message
  */
-#define ABORT_IF(cond, ret, ...) \
-    ABORT_SELECT("ABORT_IF("#cond", "#ret");", (cond), (ret), __VA_ARGS__)
+#define ABORT_IF(cond, ret, ...) {                                            \
+    diagnostics::internal::frame_cnt++;                                       \
+    if (cond) {                                                               \
+        std::string message = diagnostics::internal::buffer;                  \
+        if (!message.empty()) {                                               \
+            std::snprintf( &message.at(0), message.size(), " " __VA_ARGS__);  \
+        }                                                                     \
+        diagnostics::internal::print_msg("ABORT_IF",                          \
+                                         ABORT_N_ARGS(__VA_ARGS__),           \
+                                         #cond, #ret,                         \
+                                         diagnostics::internal::frame_cnt-1,  \
+                                         __FILE__,                            \
+                                         __LINE__,                            \
+                                         __PRETTY_FUNCTION__,                 \
+                                         message);                            \
+        diagnostics::internal::frame_cnt--;                                   \
+        return (ret);                                                         \
+    } else {                                                                  \
+        diagnostics::internal::frame_cnt--;                                   \
+    }                                                                         \
+}
 
  /**
   * @def ABORT(ret, ...)
@@ -150,8 +96,23 @@ inline void set_ostream(std::shared_ptr<std::ostream> os) {
   * additional arguments (optional) will be used to create an error
   * message
   */
-#define ABORT(ret, ...) \
-    ABORT_SELECT("ABORT("#ret");", true, (ret), __VA_ARGS__)
+#define ABORT(ret, ...) {                                                 \
+    diagnostics::internal::frame_cnt++;                                   \
+    std::string message = diagnostics::internal::buffer;                  \
+    if (!message.empty()) {                                               \
+        std::snprintf( &message.at(0), message.size(), " " __VA_ARGS__);  \
+    }                                                                     \
+    diagnostics::internal::print_msg("ABORT",                             \
+                                     ABORT_N_ARGS(__VA_ARGS__),           \
+                                     "", #ret,                            \
+                                     diagnostics::internal::frame_cnt-1,  \
+                                     __FILE__,                            \
+                                     __LINE__,                            \
+                                     __PRETTY_FUNCTION__,                 \
+                                     message);                            \
+    diagnostics::internal::frame_cnt--;                                   \
+    return (ret);                                                         \
+}
 
  /**
   * @def ABORT_IF_NOT(cond, ret, ...)
@@ -161,7 +122,26 @@ inline void set_ostream(std::shared_ptr<std::ostream> os) {
   * with the return value \a ret. Any additional arguments will be used
   * to construct an error message
   */
-#define ABORT_IF_NOT(cond, ret, ...) \
-    ABORT_SELECT("ABORT_IF_NOT("#cond", "#ret");", !(cond), (ret), __VA_ARGS__)
+#define ABORT_IF_NOT(cond, ret, ...) {                                        \
+    diagnostics::internal::frame_cnt++;                                       \
+    if (!(cond)) {                                                            \
+        std::string message = diagnostics::internal::buffer;                  \
+        if (!message.empty()) {                                               \
+            std::snprintf( &message.at(0), message.size(), " " __VA_ARGS__);  \
+        }                                                                     \
+        diagnostics::internal::print_msg("ABORT_IF_NOT",                      \
+                                         ABORT_N_ARGS(__VA_ARGS__),           \
+                                         #cond, #ret,                         \
+                                         diagnostics::internal::frame_cnt-1,  \
+                                         __FILE__,                            \
+                                         __LINE__,                            \
+                                         __PRETTY_FUNCTION__,                 \
+                                         message);                            \
+        diagnostics::internal::frame_cnt--;                                   \
+        return (ret);                                                         \
+    } else {                                                                  \
+        diagnostics::internal::frame_cnt--;                                   \
+    }                                                                         \
+}
 
 #endif  // ABORT_H_
