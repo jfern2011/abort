@@ -11,7 +11,7 @@ add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/googletest/googletest
 # -----------------------------------------------------------------------------
 # Build abort library
 # -----------------------------------------------------------------------------
-add_library(abort
+add_library(abort STATIC
     src/abort.cc
 )
 
