@@ -6,7 +6,7 @@ leading up to the point at which the last error occured in your
 program. These macros are placed inside a function or class method to
 return control to the caller in the event a run-time check fails.
 Customized error messages may be constructed using printf()-style
-syntax. Here's an example:
+syntax. For example:
 
     #include <unistd.h>
      

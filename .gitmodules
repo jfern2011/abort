@@ -1,3 +1,6 @@
 [submodule "cpplint"]
 	path = cpplint
 	url = https://github.com/cpplint/cpplint
+[submodule "googletest"]
+	path = googletest
+	url = https://github.com/google/googletest
