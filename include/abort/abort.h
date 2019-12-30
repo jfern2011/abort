@@ -39,6 +39,9 @@ extern int         frame_cnt;
 template <typename... T>
 int get_abort_nargs(T&& ... args) { return sizeof...(T); }
 
+void errno_msg(const char* select, const char* expr, const char* ret,
+             int frame_cnt, const char* file, int line, const char* func);
+
 void print_msg(const char* select, int num_args, const char* cond,
                const char* ret, int frame_cnt, const char* file, int line,
                const char* func, const std::string& msg);
@@ -137,6 +140,30 @@ void          set_ostream(std::shared_ptr<std::ostream> os);
                                          __LINE__,                            \
                                          __PRETTY_FUNCTION__,                 \
                                          message);                            \
+        diagnostics::internal::frame_cnt--;                                   \
+        return (ret);                                                         \
+    } else {                                                                  \
+        diagnostics::internal::frame_cnt--;                                   \
+    }                                                                         \
+}
+
+/**
+  * @def ABORT_ON_ERRNO(expr, ret)
+  *
+  * Triggers an abort in the event that \a expr (usually a system call)
+  * returns -1. This will cause the currently executing function to
+  * exit with the return value \a ret. An error message is constructed
+  * based on the value of errno
+  */
+#define ABORT_ON_ERRNO(expr, ret) {                                           \
+    diagnostics::internal::frame_cnt++;                                       \
+    if ((expr) == -1) {                                                       \
+        diagnostics::internal::errno_msg("ABORT_ON_ERRNO",                    \
+                                         #expr, #ret,                         \
+                                         diagnostics::internal::frame_cnt-1,  \
+                                         __FILE__,                            \
+                                         __LINE__,                            \
+                                         __PRETTY_FUNCTION__);                \
         diagnostics::internal::frame_cnt--;                                   \
         return (ret);                                                         \
     } else {                                                                  \

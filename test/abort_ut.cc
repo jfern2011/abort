@@ -244,4 +244,30 @@ TEST_F(AbortTest, set_message_size) {
     }
 }
 
+TEST_F(AbortTest, ABORT_ON_ERRNO) {
+    ASSERT_TRUE(stream_);
+    diagnostics::set_ostream(stream_);
+
+    // Simulate a system call that returns -1 and sets errno to 5
+    auto sys_call = []() {
+        errno = 5;
+        return -1;
+    };
+
+    auto y = [&]() {
+        ABORT_ON_ERRNO(sys_call(), 0);
+    };
+
+    y();
+
+    std::string str = stream_->str();
+
+    auto colonInd = str.rfind(":");   // message starts after ':'
+    ASSERT_NE(colonInd, std::string::npos);
+
+    auto substr = trim(str.substr(colonInd+1));
+    EXPECT_NE(substr.find("ABORT_ON_ERRNO"),
+              std::string::npos);
+}
+
 }  // namespace

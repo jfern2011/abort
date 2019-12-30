@@ -8,6 +8,8 @@
 
 #include "abort/abort.h"
 
+#include <cerrno>
+#include <cstring>
 #include <iostream>
 
 namespace diagnostics {
@@ -29,6 +31,27 @@ std::string buffer(1024, '\0');
  * The currently executing function's distance to the bottom of the call stack
  */
 int frame_cnt = 0;
+
+/**
+ * Write an abort message to the output stream for a syscall error
+ *
+ * @param[in] select    The selected macro
+ * @param[in] expr      The system call that returned -1
+ * @param[in] ret       The function/method return value
+ * @param[in] frame_cnt Current distance to the bottom of the call stack
+ * @param[in] file      The name of the file from which this message originated
+ * @param[in] line      The line number at which this message originated
+ * @param[in] func      Function (or method) from which this message originated
+ *
+ */
+void errno_msg(const char* select, const char* expr, const char* ret,
+             int frame_cnt, const char* file, int line, const char* func) {
+
+    get_ostream() << "abort[" << frame_cnt << "]: " << file << ":" << line
+                  << ": In '" << func << "': " << select << "(" << expr << ", "
+                  << ret << "); " << std::strerror(errno)
+                  << std::endl;
+}
 
 /**
  * Write an abort message to the output stream
