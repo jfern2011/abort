@@ -112,9 +112,9 @@ stream object can easily be swapped out:
 
 ## Usage
 
-cd abort
-mkdir build && cd build
-cmake ..
+cd abort/  
+mkdir build && cd build  
+cmake ..  
 make
 
 Note that this project imports GoogleTest as a submodule to build the unit test
