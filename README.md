@@ -121,6 +121,7 @@ Note that this project imports GoogleTest as a submodule to build the unit test
 
 ## TODO
 
+- Run through cpplint, and document commands here
 - To improve the accuracy of the stack frame counter, create an experimental
   branch using libunwind
 
