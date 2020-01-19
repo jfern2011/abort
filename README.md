@@ -119,7 +119,7 @@ make
 
 Note that this project imports GoogleTest as a submodule to build the unit test
 
-## CPPLINT
+## cpplint
 
 This project imports Google's cpplint style checker as a submodule: https://github.com/cpplint/cpplint  
 
