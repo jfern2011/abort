@@ -125,7 +125,7 @@ This project imports Google's cpplint style checker as a submodule: https://gith
 
 ### To run the linter
 
-python abort/cpplint/cpplint.py --root=. abort/include/abort/abort.h
+python abort/cpplint/cpplint.py --root=. abort/include/abort/abort.h  
 python abort/cpplint/cpplint.py --root=. abort/src/abort.cc
 
 ## TODO
