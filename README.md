@@ -119,9 +119,17 @@ make
 
 Note that this project imports GoogleTest as a submodule to build the unit test
 
+## CPPLINT
+
+This project imports Google's cpplint style checker as a submodule: https://github.com/cpplint/cpplint  
+
+### To run the linter
+
+python abort/cpplint/cpplint.py --root=. abort/include/abort/abort.h
+python abort/cpplint/cpplint.py --root=. abort/src/abort.cc
+
 ## TODO
 
-- Run through cpplint, and document commands here
 - To improve the accuracy of the stack frame counter, create an experimental
   branch using libunwind
 

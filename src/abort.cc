@@ -3,6 +3,8 @@
  *  \author Jason Fernandez
  *  \date   12/28/2019
  *
+ *  Copyright 2020 Jason Fernandez
+ *
  *  https://github.com/jfern2011/abort
  */
 
@@ -46,7 +48,6 @@ int frame_cnt = 0;
  */
 void errno_msg(const char* select, const char* expr, const char* ret,
              int frame_cnt, const char* file, int line, const char* func) {
-
     get_ostream() << "abort[" << frame_cnt << "]: " << file << ":" << line
                   << ": In '" << func << "': " << select << "(" << expr << ", "
                   << ret << "); " << std::strerror(errno)
@@ -70,7 +71,6 @@ void errno_msg(const char* select, const char* expr, const char* ret,
 void print_msg(const char* select, int num_args, const char* cond,
                const char* ret, int frame_cnt, const char* file, int line,
                const char* func, const std::string& msg) {
-
     get_ostream() << "abort[" << frame_cnt << "]: " << file << ":" << line
                   << ": In '" << func << "':";
 

@@ -3,11 +3,13 @@
  *  \author Jason Fernandez
  *  \date   12/28/2019
  *
+ *  Copyright 2020 Jason Fernandez
+ *
  *  https://github.com/jfern2011/abort
  */
 
-#ifndef ABORT_H_
-#define ABORT_H_
+#ifndef ABORT_INCLUDE_ABORT_ABORT_H_
+#define ABORT_INCLUDE_ABORT_ABORT_H_
 
 #include <cstddef>
 #include <cstdio>
@@ -74,7 +76,7 @@ void          set_ostream(std::shared_ptr<std::ostream> os);
     if (cond) {                                                               \
         std::string message = diagnostics::internal::buffer;                  \
         if (!message.empty()) {                                               \
-            std::snprintf( &message.at(0), message.size(), " " __VA_ARGS__);  \
+            std::snprintf(&message.at(0), message.size(), " " __VA_ARGS__);   \
         }                                                                     \
         diagnostics::internal::print_msg("ABORT_IF",                          \
                                          ABORT_N_ARGS(__VA_ARGS__),           \
@@ -103,7 +105,7 @@ void          set_ostream(std::shared_ptr<std::ostream> os);
     diagnostics::internal::frame_cnt++;                                   \
     std::string message = diagnostics::internal::buffer;                  \
     if (!message.empty()) {                                               \
-        std::snprintf( &message.at(0), message.size(), " " __VA_ARGS__);  \
+        std::snprintf(&message.at(0), message.size(), " " __VA_ARGS__);   \
     }                                                                     \
     diagnostics::internal::print_msg("ABORT",                             \
                                      ABORT_N_ARGS(__VA_ARGS__),           \
@@ -130,7 +132,7 @@ void          set_ostream(std::shared_ptr<std::ostream> os);
     if (!(cond)) {                                                            \
         std::string message = diagnostics::internal::buffer;                  \
         if (!message.empty()) {                                               \
-            std::snprintf( &message.at(0), message.size(), " " __VA_ARGS__);  \
+            std::snprintf(&message.at(0), message.size(), " " __VA_ARGS__);   \
         }                                                                     \
         diagnostics::internal::print_msg("ABORT_IF_NOT",                      \
                                          ABORT_N_ARGS(__VA_ARGS__),           \
@@ -171,4 +173,4 @@ void          set_ostream(std::shared_ptr<std::ostream> os);
     }                                                                         \
 }
 
-#endif  // ABORT_H_
+#endif  // ABORT_INCLUDE_ABORT_ABORT_H_
