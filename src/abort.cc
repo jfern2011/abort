@@ -15,6 +15,8 @@
 #include <iostream>
 
 namespace diagnostics {
+
+#ifndef DOXYGEN_SKIP
 namespace internal {
 
 /**
@@ -84,6 +86,7 @@ void print_msg(const char* select, int num_args, const char* cond,
 }
 
 }  // namespace internal
+#endif
 
 /**
  * Get the stream object currently being written to

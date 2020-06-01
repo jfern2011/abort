@@ -24,6 +24,8 @@
 #endif  // DOXYGEN_SKIP
 
 namespace diagnostics {
+
+#ifndef DOXYGEN_SKIP
 namespace internal {
 
 extern std::string buffer;
@@ -49,6 +51,7 @@ void print_msg(const char* select, int num_args, const char* cond,
                const char* func, const std::string& msg);
 
 }  // namespace internal
+#endif
 
 std::ostream& get_ostream();
 void          set_message_size(std::size_t size);
