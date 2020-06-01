@@ -3,6 +3,8 @@
  *  \author Jason Fernandez
  *  \date   12/28/2019
  *
+ *  Copyright 2020 Jason Fernandez
+ *
  *  https://github.com/jfern2011/abort
  */
 
@@ -28,27 +30,25 @@ namespace {
  * @param [in]  delim  The delimiter
  */
 void split(const std::string& str,
-           std::vector<std::string>& tokens,
-           const std::string& delim=" ")
-{
+           std::vector<std::string>* tokens,
+           const std::string& delim = " ") {
     const std::string line = str;
 
-    tokens.clear();
+    tokens->clear();
 
-    if (delim.empty()){ return; }
+    if (delim.empty()) { return; }
 
     size_t ind, start = 0;
-    while ((ind= line.find(delim, start)) != std::string::npos)
-    {
+    while ((ind= line.find(delim, start)) != std::string::npos) {
         if (ind - start > 0)
-            tokens.push_back (line.substr(start, ind - start));
+            tokens->push_back(line.substr(start, ind - start));
         start = ind + delim.size();
     }
 
     /* Final token */
 
     if (start < line.size())
-        tokens.push_back(line.substr(start,
+        tokens->push_back(line.substr(start,
             std::string::npos));
 }
 
@@ -61,8 +61,7 @@ void split(const std::string& str,
  * @return     The input string with all leading and trailing
  *             whitespace removed
  */
-std::string trim(const std::string& str)
-{
+std::string trim(const std::string& str) {
     if (str.empty()) return str;
 
     const std::string space = "\t\n\v\f\r ";
@@ -76,15 +75,14 @@ std::string trim(const std::string& str)
     size_t stop = str.find_last_not_of(space);
 
     return
-        str.substr(start,stop-start+1);
+        str.substr(start, stop-start+1);
 }
 
 /**
  * ABORT* macro test fixture
  */
 class AbortTest : public ::testing::Test {
-protected:
-
+ protected:
 /** Test setup method */
 void SetUp() override {
     stream_ = std::make_shared<std::ostringstream>();
@@ -134,7 +132,6 @@ int abort_if(int depth) {
  * The stream object to write to
  */
 std::shared_ptr<std::ostringstream> stream_;
-
 };
 
 TEST_F(AbortTest, ABORT_IF_NOT) {
@@ -144,13 +141,14 @@ TEST_F(AbortTest, ABORT_IF_NOT) {
 
     std::string str = stream_->str();
     std::vector<std::string> lines;
-    split(str, lines, "\n");
+    split(str, &lines, "\n");
 
     ASSERT_EQ(lines.size(), 6u);
-    
+
     for (std::size_t i = 0; i < lines.size(); i++) {
         char preface[16];
-        std::snprintf(preface, 16, "abort[%zu]:", lines.size()-i-1);
+        std::snprintf(preface, sizeof(preface),
+                      "abort[%zu]:", lines.size()-i-1);
         EXPECT_EQ(lines[i].find(preface), 0);
         if (i == 0) {
             EXPECT_NE(lines[i].find("depth = 5"), std::string::npos)
@@ -173,13 +171,14 @@ TEST_F(AbortTest, ABORT) {
 
     std::string str = stream_->str();
     std::vector<std::string> lines;
-    split(str, lines, "\n");
+    split(str, &lines, "\n");
 
     ASSERT_EQ(lines.size(), 6u);
-    
+
     for (std::size_t i = 0; i < lines.size(); i++) {
         char preface[16];
-        std::snprintf(preface, 16, "abort[%zu]:", std::size_t(0));
+        std::snprintf(preface, sizeof(preface),
+                      "abort[%zu]:", std::size_t(0));
         EXPECT_EQ(lines[i].find(preface), 0);
         if (i == 5) {
             EXPECT_NE(lines[i].find("depth = 5"), std::string::npos)
@@ -198,13 +197,14 @@ TEST_F(AbortTest, ABORT_IF) {
 
     std::string str = stream_->str();
     std::vector<std::string> lines;
-    split(str, lines, "\n");
+    split(str, &lines, "\n");
 
     ASSERT_EQ(lines.size(), 6u);
-    
+
     for (std::size_t i = 0; i < lines.size(); i++) {
         char preface[16];
-        std::snprintf(preface, 16, "abort[%zu]:", lines.size()-i-1);
+        std::snprintf(preface, sizeof(preface),
+                      "abort[%zu]:", lines.size()-i-1);
         EXPECT_EQ(lines[i].find(preface), 0);
         if (i == 0) {
             EXPECT_NE(lines[i].find("depth = 5"), std::string::npos)
@@ -225,7 +225,6 @@ TEST_F(AbortTest, set_message_size) {
     };
 
     for (std::size_t i = 0; i <= 5; i++) {
-
         diagnostics::set_message_size(i);
 
         y();
