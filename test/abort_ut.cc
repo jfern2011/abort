@@ -98,6 +98,7 @@ void SetUp() override {
 int abort_if_not(int depth) {
     ABORT_IF_NOT(depth < 5, -1, "depth = %d", depth);
     ABORT_IF_NOT(abort_if_not(depth+1) == 0, -1);
+    return -1;
 }
 
 /**
@@ -126,6 +127,7 @@ int abort(int depth) {
 int abort_if(int depth) {
     ABORT_IF(depth >= 5, -1, "depth = %d", depth);
     ABORT_IF(abort_if(depth+1) == -1, -1);
+    return -1;
 }
 
 /**
@@ -255,6 +257,7 @@ TEST_F(AbortTest, ABORT_ON_ERRNO) {
 
     auto y = [&]() {
         ABORT_ON_ERRNO(sys_call(), 0);
+        return 0;
     };
 
     y();
